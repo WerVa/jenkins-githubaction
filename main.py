@@ -22,6 +22,8 @@ def main():
     timeout = int(os.environ.get("INPUT_TIMEOUT"))
     start_timeout = int(os.environ.get("INPUT_START_TIMEOUT"))
     interval = int(os.environ.get("INPUT_INTERVAL"))
+    failure_statuses_input = os.environ.get("INPUT_FAILURE_STATUSES", "FAILURE ABORTED UNSTABLE")
+    failure_statuses = failure_statuses_input.split()
 
     if username and api_token:
         auth = (username, api_token)
@@ -88,15 +90,18 @@ def main():
         if result == 'SUCCESS':
             logging.info('Build successful 🎉')
             return
-        elif result in ('FAILURE', 'ABORTED', 'UNSTABLE'):
+        elif result in failure_statuses:
+            logging.info(f'Build returned "{result}", but considered successful due to failure-statuses input.')
+            return
+        else:
             raise Exception(
-                f'Build status returned "{result}". Build has failed ☹️.')
+                f'Build status returned "{result}". Build has failed.')
         logging.info(
             f'Build not finished yet. Waiting {interval} seconds. {build_url}')
         sleep(interval)
     else:
         raise Exception(
-            f"Build has not finished and timed out. Waited for {timeout} seconds.") # noqa
+            f"Build has not finished and timed out. Waited for {timeout} seconds.")  # noqa
 
 
 if __name__ == "__main__":
